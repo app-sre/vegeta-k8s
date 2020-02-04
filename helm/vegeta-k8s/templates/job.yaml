@@ -1,0 +1,74 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "vegeta-k8s.fullname" . }}
+  labels:
+    {{- include "vegeta-k8s.labels" . | nindent 4 }}
+spec:
+  parallelism: {{ default "1" .Values.jobParallelism }}
+  backoffLimit: 0
+  template:
+    spec:
+    {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+      serviceAccountName: {{ include "vegeta-k8s.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      restartPolicy: OnFailure
+      volumes:
+        - name: temp-volume
+          emptyDir: {}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          volumeMounts:
+            - name: temp-volume
+              mountPath: /temp-dir
+          env:
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ default (include "vegeta-k8s.fullname" .) .Values.app.awsSecretName }}
+                  key: access_key_id
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ default (include "vegeta-k8s.fullname" .) .Values.app.awsSecretName }}
+                  key: secret_access_key
+            - name: AWS_DEFAULT_REGION
+              value: "{{ required "missing app.awsDefaultRegion" .Values.app.awsDefaultRegion }}"
+            - name: S3_BUCKET_NAME
+              value: "{{ required "missing app.s3BucketName" .Values.app.s3BucketName }}"
+            - name: TEMP_DIR
+              value: /temp-dir
+            - name: ATTACK_NAME
+              value: "{{ required "missing app.attackName" .Values.app.attackName }}"
+            - name: ATTACK_POD
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: COMMAND
+              value: "{{ required "missing app.httpCommand" .Values.app.httpCommand }}"
+            - name: DURATION
+              value: "{{ default "60s" .Values.app.attackDuration }}"
+            - name: RATE
+              value: "{{ default "1" .Values.app.attackRate }}"
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+    {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
