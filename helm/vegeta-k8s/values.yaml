@@ -16,6 +16,11 @@ app: {}
   # awsAccessKeyId: XXXXX
   # awsSecretAccessKey: XXXXX
   # awsDefaultRegion: xx-xxxx-x
+  # s3BucketName: bucket-name
+  # attackName: this-will-be-used-in-the-results-name
+  # httpCommand: to use in vegeta
+  # attackDuration: for vegeta
+  # attackRate: for vegeta
 
 serviceAccount:
   # Specifies whether a service account should be created
