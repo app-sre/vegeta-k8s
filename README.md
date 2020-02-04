@@ -9,3 +9,7 @@ helm install <release name> helm/vegeta-k8s [options]
 If you don't want to use helm, you can use `helm template` to render the templates and install it via standard `kubectl`.
 
 See [values.yaml](helm/vegeta-k8s/values.yaml) of the helm chart in order to see the options available
+
+## TODO
+
+* Support for command files in vegeta
