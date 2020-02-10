@@ -5,8 +5,9 @@
 jobParallelism: 1
 
 image:
-  repository: rporres/vegeta-k8s
-  pullPolicy: IfNotPresent
+  repository: rporres/vegeta-k8s-master
+  tag: latest
+  pullPolicy: Always
 
 imagePullSecrets: []
 nameOverride: ""
@@ -18,9 +19,11 @@ app: {}
   # awsDefaultRegion: xx-xxxx-x
   # s3BucketName: bucket-name
   # attackName: this-will-be-used-in-the-results-name
-  # httpCommand: to use in vegeta
   # attackDuration: for vegeta
   # attackRate: for vegeta
+  # keepalive: "true"
+  # maxWorkers: 10000
+  # httpTargets: [ 'to', 'use', 'in', 'vegeta' ]
 
 serviceAccount:
   # Specifies whether a service account should be created

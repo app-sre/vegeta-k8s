@@ -1,0 +1,19 @@
+FROM golang:1.13.7-alpine3.11 as builder
+
+RUN apk -uv add git make && \
+    git clone --depth 1 https://github.com/tsenart/vegeta.git && \
+    cd vegeta && \
+    make
+
+FROM python:3.8.1-alpine3.11
+
+ARG AWS_CLI_VERSION=1.17.9
+
+RUN pip install --no-cache-dir awscli==$AWS_CLI_VERSION && \
+    apk -uv add bash
+
+COPY --from=builder /go/vegeta /usr/local/bin
+
+ADD attack.sh /usr/local/bin
+
+CMD attack.sh

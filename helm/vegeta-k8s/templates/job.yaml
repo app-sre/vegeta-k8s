@@ -15,20 +15,26 @@ spec:
     {{- end }}
       serviceAccountName: {{ include "vegeta-k8s.serviceAccountName" . }}
       securityContext:
-        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+        sysctls:
+          - name: net.ipv4.ip_local_port_range
+            value: "1024 65535"
       restartPolicy: OnFailure
       volumes:
         - name: temp-volume
           emptyDir: {}
+        - name: vegeta-targets
+          configMap:
+            name: {{ include "vegeta-k8s.fullname" . }}
       containers:
         - name: {{ .Chart.Name }}
-          securityContext:
-            {{- toYaml .Values.securityContext | nindent 12 }}
-          image: "{{ .Values.image.repository }}:{{ .Chart.AppVersion }}"
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           volumeMounts:
             - name: temp-volume
               mountPath: /temp-dir
+            - name: vegeta-targets
+              mountPath: /opt/vegeta-targets.txt
+              subPath: vegeta-targets.txt
           env:
             - name: AWS_ACCESS_KEY_ID
               valueFrom:
@@ -46,18 +52,38 @@ spec:
               value: "{{ required "missing app.s3BucketName" .Values.app.s3BucketName }}"
             - name: TEMP_DIR
               value: /temp-dir
+            - name: TARGETS
+              value: /opt/vegeta-targets.txt
             - name: ATTACK_NAME
               value: "{{ required "missing app.attackName" .Values.app.attackName }}"
             - name: ATTACK_POD
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.name
-            - name: COMMAND
-              value: "{{ required "missing app.httpCommand" .Values.app.httpCommand }}"
             - name: DURATION
-              value: "{{ default "60s" .Values.app.attackDuration }}"
+              value: "{{ required "missing app.attackDuration" .Values.app.attackDuration }}"
             - name: RATE
-              value: "{{ default "1" .Values.app.attackRate }}"
+              value: "{{ required "missing app.attackRate" .Values.app.attackRate }}"
+            {{- if .Values.app.keepalive }}
+            - name: KEEPALIVE
+              value: "{{ .Values.app.keepalive }}"
+            {{- end }}
+            {{- if .Values.app.maxWorkers }}
+            - name: MAX_WORKERS
+              value: "{{ .Values.app.maxWorkers }}"
+            {{- end }}
+            {{- if .Values.app.maxConnections }}
+            - name: MAX_CONNECTIONS
+              value: "{{ .Values.app.maxConnections }}"
+            {{- end }}
+            {{- if .Values.app.connections }}
+            - name: CONNECTIONS
+              value: "{{ .Values.app.connections }}"
+            {{- end }}
+            {{- if .Values.app.timeout }}
+            - name: TIMEOUT
+              value: "{{ .Values.app.timeout }}"
+            {{- end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
       {{- with .Values.nodeSelector }}

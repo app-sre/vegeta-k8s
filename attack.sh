@@ -8,8 +8,8 @@ for var in AWS_ACCESS_KEY_ID \
            TEMP_DIR \
            ATTACK_NAME \
            ATTACK_POD \
-           COMMAND \
            DURATION \
+           TARGETS \
            RATE
 do
     if [[ ! "${!var}" ]]; then
@@ -17,6 +17,9 @@ do
         count=$((count + 1))
     fi
 done
+
+ULIMIT=${ULIMIT:-1048576}
+ulimit -n $ULIMIT
 
 [[ $count -gt 0 ]] && exit 1
 
@@ -36,7 +39,15 @@ function copy_report() {
 
 trap copy_report INT TERM
 
-log "Running vegeta"
-echo "$COMMAND" | vegeta attack -name "$ATTACK_POD"  -rate="$RATE" -duration="$DURATION" > "$VEGETA_RESULT"
+CMD="vegeta attack -targets=$TARGETS -name=$ATTACK_POD  -rate=$RATE -duration=$DURATION"
+[ -n "$KEEPALIVE" ] && CMD="$CMD -keepalive=$KEEPALIVE"
+[ -n "$MAX_WORKERS" ] && CMD="$CMD -max-workers=$MAX_WORKERS"
+[ -n "$MAX_CONNECTIONS" ] && CMD="$CMD -max-connections=$MAX_CONNECTIONS"
+[ -n "$CONNECTIONS" ] && CMD="$CMD -connections=$CONNECTIONS"
+[ -n "$TIMEOUT" ] && CMD="$CMD -timeout=$TIMEOUT"
+
+log "Running $CMD"
+$CMD > "$VEGETA_RESULT"
+
 vegeta report $VEGETA_RESULT
 copy_report
