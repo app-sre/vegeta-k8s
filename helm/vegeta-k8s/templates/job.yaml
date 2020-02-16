@@ -27,7 +27,7 @@ spec:
             name: {{ include "vegeta-k8s.fullname" . }}
       containers:
         - name: {{ .Chart.Name }}
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          image: "{{ .Values.image.repository }}:{{- if .Values.image.tag -}}{{ .Values.image.tag }}{{- else -}}{{ .Chart.AppVersion }}{{- end -}}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           volumeMounts:
             - name: temp-volume
@@ -54,16 +54,14 @@ spec:
               value: /temp-dir
             - name: TARGETS
               value: /opt/vegeta-targets.txt
-            - name: ATTACK_NAME
-              value: "{{ required "missing app.attackName" .Values.app.attackName }}"
-            - name: ATTACK_POD
+            - name: POD_NAME
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.name
             - name: DURATION
-              value: "{{ required "missing app.attackDuration" .Values.app.attackDuration }}"
+              value: "{{ required "missing app.duration" .Values.app.duration }}"
             - name: RATE
-              value: "{{ required "missing app.attackRate" .Values.app.attackRate }}"
+              value: "{{ required "missing app.rate" .Values.app.rate }}"
             {{- if .Values.app.keepalive }}
             - name: KEEPALIVE
               value: "{{ .Values.app.keepalive }}"
