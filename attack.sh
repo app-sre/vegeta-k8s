@@ -6,8 +6,7 @@ for var in AWS_ACCESS_KEY_ID \
            AWS_DEFAULT_REGION \
            S3_BUCKET_NAME \
            TEMP_DIR \
-           ATTACK_NAME \
-           ATTACK_POD \
+           POD_NAME \
            DURATION \
            TARGETS \
            RATE
@@ -23,7 +22,7 @@ ulimit -n $ULIMIT
 
 [[ $count -gt 0 ]] && exit 1
 
-VEGETA_RESULT="$TEMP_DIR/vegeta-results-$ATTACK_NAME-$(date +%Y%m%d%H%M%S)-$ATTACK_POD.bin"
+VEGETA_RESULT="$TEMP_DIR/vegeta-results-$POD_NAME-$(date +%Y%m%d_%H%M%S).bin"
 
 function log() {
     echo "$(date +%Y%m%d%H%M%S) - $1"
@@ -39,7 +38,7 @@ function copy_report() {
 
 trap copy_report INT TERM
 
-CMD="vegeta attack -targets=$TARGETS -name=$ATTACK_POD  -rate=$RATE -duration=$DURATION"
+CMD="vegeta attack -targets=$TARGETS -name=$POD_NAME  -rate=$RATE -duration=$DURATION"
 [ -n "$KEEPALIVE" ] && CMD="$CMD -keepalive=$KEEPALIVE"
 [ -n "$MAX_WORKERS" ] && CMD="$CMD -max-workers=$MAX_WORKERS"
 [ -n "$MAX_CONNECTIONS" ] && CMD="$CMD -max-connections=$MAX_CONNECTIONS"
