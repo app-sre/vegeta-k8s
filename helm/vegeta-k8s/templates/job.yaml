@@ -25,6 +25,18 @@ spec:
         - name: vegeta-targets
           configMap:
             name: {{ include "vegeta-k8s.fullname" . }}
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: job-name
+                  operator: In
+                  values:
+                  - {{ include "vegeta-k8s.fullname" . }}
+              topologyKey: kubernetes.io/hostname
       containers:
         - name: {{ .Chart.Name }}
           image: "{{ .Values.image.repository }}:{{- if .Values.image.tag -}}{{ .Values.image.tag }}{{- else -}}{{ .Chart.AppVersion }}{{- end -}}"
